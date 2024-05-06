@@ -1,28 +1,40 @@
 import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { TemperatureService } from './services/temperature.service';
+import { FormBuilder, FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, HttpClientModule],
+  providers: [TemperatureService],
+  imports: [RouterOutlet, HttpClientModule, FormsModule],
   templateUrl: './app.component.html',
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   title = 'weather-forecast';
-  data:any = {};
+  data: any = {};
   httpClient = inject(HttpClient);
   api_key = '45937c74ec7cc2298a6fe8c7bb4417df';
+  input_city = '';
+  sunset = '';
+  sunrise = '';
+
+  constructor(private service: TemperatureService) {}
+
+  ngOnInit(): void {
+    this.service.getDataOnInit().subscribe((data) => {
+      this.data = data;
+      this.sunset = new Date(data.sys.sunset * 1000).toLocaleTimeString();
+      this.sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString();
+    });
+  }
 
   searchWeatherForecast() {
-    const response = this.httpClient.get(
-      `https://api.openweathermap.org/data/2.5/weather?q=Campinas&appid=${this.api_key}`
-    );
-    console.log(
-      response.subscribe((data: any) => {
-        this.data = data;
-        console.log(data.name);
-      })
-    );
+    return this.service.getData(this.input_city).subscribe((data) => {
+      this.data = data;
+      this.sunset = new Date(data.sys.sunset * 1000).toLocaleTimeString();
+      this.sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString();
+    });
   }
 }
